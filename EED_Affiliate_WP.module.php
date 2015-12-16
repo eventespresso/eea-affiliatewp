@@ -28,7 +28,10 @@ class EED_Affiliate_WP extends EED_Module {
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
 	}
 
-	public static function set_hooks_admin() {}
+	public static function set_hooks_admin() {
+		//covers ajax requests
+		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
+	}
 
 
 	public function run( $WP ) {
@@ -49,7 +52,7 @@ class EED_Affiliate_WP extends EED_Module {
 		$ref   = isset( $_COOKIE['affwp_ref'] ) ? $_COOKIE['affwp_ref'] : '';
 		$visit = isset( $_COOKIE['affwp_ref_visit_id'] ) ? $_COOKIE['affwp_ref_visit_id'] : 0;
 		$campaign = isset( $_COOKIE['affwp_campaign'] ) ? $_COOKIE['affwp_campaign'] : '';
-
+		do_action( 'AHEE_log', __FILE__, __FUNCTION__, $transaction->is_completed(), 'transaction is completed for affiliate wp callback' );
 		//only execute if valid affiliate, if this visit hasn't already been tracked, and IF we have a valid transaction object
 		//and the transaction is complete.
 		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
