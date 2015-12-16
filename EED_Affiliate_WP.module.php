@@ -78,7 +78,7 @@ class EED_Affiliate_WP extends EED_Module {
 			}
 
 			if ( $event_titles ) {
-				$description = count( $event_titles ) > 1 ? 'Registration for the events: ' . implode( ', ', $event_titles ) : 'Registration for the event: ' . $event_titles[0];
+				$description = count( $event_titles ) > 1 ? sprintf( __( 'Registration for the events: %s', 'event_espresso' ), implode( ', ', $event_titles ) ) : sprintf( 'Registration for the event: %s ', 'event_espresso', $event_titles[0] );
 			} else {
 				$description = '';
 			}
@@ -87,9 +87,9 @@ class EED_Affiliate_WP extends EED_Module {
 			$referral_id = $awp->referrals->add( array(
 				'affiliate_id' => $ref,
 				'amount' => $invoice_amount,
-				'status' => 'pending',
+				'status' => 'pending', //not localized, this is an internal reference
 				'description' => $description,
-				'context' => 'Event Registration - Complete Transaction',
+				'context' => __( 'Event Registration - Complete Transaction', 'event_espresso' ),
 				'campaign' => $campaign,
 				'reference' => $transaction->ID(),
 				'visit_id' => $awp->tracking->get_visit_id()
