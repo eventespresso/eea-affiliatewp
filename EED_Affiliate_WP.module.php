@@ -48,10 +48,6 @@ class EED_Affiliate_WP extends EED_Module {
 	 * @param EE_Transaction|null $transaction
 	 */
 	public static function track_conversion( $transaction, $update_params ) {
-		//let's get the affiliate ID and cookie
-		$ref   = isset( $_COOKIE['affwp_ref'] ) ? $_COOKIE['affwp_ref'] : '';
-		$visit = isset( $_COOKIE['affwp_ref_visit_id'] ) ? $_COOKIE['affwp_ref_visit_id'] : 0;
-		$campaign = isset( $_COOKIE['affwp_campaign'] ) ? $_COOKIE['affwp_campaign'] : '';
 		do_action( 'AHEE_log', __FILE__, __FUNCTION__, $transaction->is_completed(), 'transaction is completed for affiliate wp callback' );
 		//only execute if valid affiliate, if this visit hasn't already been tracked, and IF we have a valid transaction object
 		//and the transaction is complete.
@@ -59,7 +55,7 @@ class EED_Affiliate_WP extends EED_Module {
 		if (
 			$awp instanceof Affiliate_WP
 			&& $awp->tracking instanceof Affiliate_WP_Tracking
-			&& $awp->tracking->is_valid_affiliate( $ref )
+			&& $awp->tracking->is_valid_affiliate( $awp->tracking->get_affiliate_id() )
 			&& ! affiliate_wp()->referrals->get_by( 'visit_id', $awp->tracking->get_visit_id() )
 			&& $transaction instanceof EE_Transaction
 			&& $transaction->is_completed()
@@ -85,12 +81,12 @@ class EED_Affiliate_WP extends EED_Module {
 
 			//store visit in db
 			$referral_id = $awp->referrals->add( array(
-				'affiliate_id' => $ref,
+				'affiliate_id' => $awp->tracking->get_affiliate_id(),
 				'amount' => $invoice_amount,
 				'status' => 'pending', //not localized, this is an internal reference
 				'description' => $description,
 				'context' => __( 'Event Registration - Complete Transaction', 'event_espresso' ),
-				'campaign' => $campaign,
+				'campaign' => $awp->tracking->get_campaign(),
 				'reference' => $transaction->ID(),
 				'visit_id' => $awp->tracking->get_visit_id()
 			));
