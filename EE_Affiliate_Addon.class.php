@@ -9,26 +9,26 @@ define( 'EE_AFFILIATE_WP_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  *
- * Class  EE_AffiliateWP_Addon
+ * Class  EE_Affiliate_Addon
  *
  * @package			Event Espresso
  * @subpackage		eea-new-addon
  * @author			Darren Ethier
  *
  */
-Class  EE_AffiliateWP_Addon extends EE_Addon {
+Class  EE_Affiliate_Addon extends EE_Addon {
 
 	public static function register_addon() {
 		// register addon via Plugin API
 		EE_Register_Addon::register(
-			'EE_AFFILIATE_WP',
+			'EE_Affiliate_Addon',
 			array(
 				'version' 					=> EE_AFFILIATE_WP_VERSION,
-				'plugin_slug' 			=> 'new_addon',
+				'plugin_slug' 			=> 'eea-affiliate-wp',
 				'min_core_version' => EE_AFFILIATE_WP_CORE_VERSION_REQUIRED,
 				'main_file_path' 		=> EE_AFFILIATE_WP_PLUGIN_FILE,
 				'autoloader_paths' => array(
-					'EE_AffiliateWP_Addon' 						=> EE_AFFILIATE_WP_PATH . 'EE_AffiliateWP_Addon.class.php',
+					'EE_Affiliate_Addon' 						=> EE_AFFILIATE_WP_PATH . 'EE_Affiliate_Addon.class.php',
 				),
 				// if plugin update engine is being used for auto-updates. not needed if PUE is not being used.
 				'pue_options'			=> array(
@@ -40,7 +40,7 @@ Class  EE_AffiliateWP_Addon extends EE_Addon {
 			)
 		);
 
-		add_action( 'AHEE__thank_you_page_transaction_details_template__after_transaction_table_row', array( 'EE_AffiliateWP_Addon', 'track_conversion' ) );
+		add_action( 'AHEE__thank_you_page_transaction_details_template__after_transaction_table_row', array( 'EE_Affiliate_Addon', 'track_conversion' ) );
 	}
 
 
@@ -60,7 +60,7 @@ Class  EE_AffiliateWP_Addon extends EE_Addon {
 
 		//only execute if valid affiliate, if this visit hasn't already been tracked, and IF we have a valid transaction object
 		//and the transaction is complete.
-		$awp = affiliate_wp();
+		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
 		if (
 			$awp instanceof Affiliate_WP
 			&& $awp->tracking instanceof Affiliate_WP_Tracking
