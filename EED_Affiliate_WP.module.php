@@ -20,6 +20,17 @@ if ( ! defined('EVENT_ESPRESSO_VERSION')) exit('No direct script access allowed'
  * ------------------------------------------------------------------------
  */
 class EED_Affiliate_WP extends EED_Module {
+
+
+	/**
+	 * This is used for the affwp context resource reference for each affiliate record
+	 * in the affwp tables.
+	 *
+	 * @type string
+	 */
+	protected static $_context = 'event_espresso';
+
+
 	public static function instance() {
 		return parent::get_instance( __CLASS__ );
 	}
@@ -49,50 +60,107 @@ class EED_Affiliate_WP extends EED_Module {
 	 */
 	public static function track_conversion( $transaction, $update_params ) {
 		do_action( 'AHEE_log', __FILE__, __FUNCTION__, $transaction->is_completed(), 'transaction is completed for affiliate wp callback' );
-		//only execute if valid affiliate, if this visit hasn't already been tracked, and IF we have a valid transaction object
-		//and the transaction is complete.
+
 		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
+
+		//first determine if we have a valid affiliate_wp instance or EE_Transaction object and can even work with it!
 		if (
-			$awp instanceof Affiliate_WP
-			&& $awp->tracking instanceof Affiliate_WP_Tracking
-			&& $awp->tracking->is_valid_affiliate( $awp->tracking->get_affiliate_id() )
-			&& ! affiliate_wp()->referrals->get_by( 'visit_id', $awp->tracking->get_visit_id() )
-			&& $transaction instanceof EE_Transaction
-			&& $transaction->is_completed()
+			! $awp instanceof Affiliate_WP
+			|| ! $transaction instanceof EE_Transaction
 		) {
-			$invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount( $transaction->total() ) : 0;
+			return;
+		}
 
-			//get events on transaction so we can setup the description for this purchase.
-			$registrations = $transaction->registrations();
-			$event_titles = array();
-			foreach ( $registrations as $registration ) {
-				if ( $registration instanceof EE_Registration ) {
-					if ( $registration->event_name() ) {
-						$event_titles[] = $registration->event_name();
-					}
-				}
-			}
+		//next see if this transaction is already being tracked and if it is, then we update the affiliate record if necessary.
+		if (
+			$referral = $awp->referrals->get_by( 'reference', $transaction->ID(), self::$_context )
+		) {
+			self::_maybe_update_affiliate_status( $transaction, $awp, $referral );
+		} else {
+			//so there is no affiliate record for this transaction so we'll create one if possible.
+			self::_maybe_initiate_affiliate_tracking( $transaction, $awp );
+		}
 
-			if ( $event_titles ) {
-				$description = count( $event_titles ) > 1 ? sprintf( __( 'Registration for the events: %s', 'event_espresso' ), implode( ', ', $event_titles ) ) : sprintf( 'Registration for the event: %s ', 'event_espresso', $event_titles[0] );
-			} else {
-				$description = '';
-			}
+	}
+	
 
-			//store visit in db
-			$referral_id = $awp->referrals->add( array(
-				'affiliate_id' => $awp->tracking->get_affiliate_id(),
-				'amount' => $invoice_amount,
-				'status' => 'pending', //not localized, this is an internal reference
-				'description' => $description,
-				'context' => __( 'Event Registration - Complete Transaction', 'event_espresso' ),
-				'campaign' => $awp->tracking->get_campaign(),
-				'reference' => $transaction->ID(),
-				'visit_id' => $awp->tracking->get_visit_id()
-			));
+	/**
+	 * This will update a AffiliateWP referral record if it hasn't been paid according to the transaction status.
+	 *
+	 * @param EE_Transaction $transaction
+	 * @param Affiliate_WP   $awp
+	 * @param                $referral
+	 */
+	protected static function _maybe_update_affiliate_status( EE_Transaction $transaction, Affiliate_WP $awp, $referral ) {
+		//if $referral isn't an object or has already been paid, then get out
+		if (
+			! is_object( $referral )
+			|| $referral->status === 'paid'
+		) {
+			return;
+		}
 
-			affwp_set_referral_status( $referral_id, 'unpaid' );
-			$awp->visits->update( $awp->tracking->get_visit_id(), array( 'referral_id' => $referral_id ), '', 'visit' );
+		//if transaction is complete, then let's update the status to unpaid. Otherwise we make sure the status is pending.
+		if ( $transaction->is_completed() ) {
+			$awp->referrals->update( $referral->referral_id, array( 'status' => 'unpaid' ), '', 'referral' );
+		} else {
+			$awp->referrals->update( $referral->referral_id, array( 'status' => 'pending' ), '', 'referral' );
 		}
 	}
+
+
+
+
+	/**
+	 * This will create an affiliate wp referral record if there is an affiliate ID in the request.  Note, this does NOT
+	 * check if an affiliate record has already been created.  That needs to be done by client code.
+	 *
+	 * @param EE_Transaction $transaction
+	 * @param Affiliate_WP   $awp
+	 */
+	protected static function _maybe_initiate_affiliate_tracking( EE_Transaction $transaction, Affiliate_WP $awp ) {
+
+		//only do this if we have a valid affiliate id.
+		if ( ! $awp->tracking->is_valid_affiliate( $awp->tracking->get_affiliate_id() ) ) {
+			return;
+		}
+
+		//valid affiliate so let's get creating the initial affiliate record.
+		$invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount( $transaction->total() ) : 0;
+
+		//get events on transaction so we can setup the description for this purchase.
+		$registrations = $transaction->registrations();
+		$event_titles = array();
+		foreach ( $registrations as $registration ) {
+			if ( $registration instanceof EE_Registration ) {
+				if ( $registration->event_name() ) {
+					$event_titles[] = $registration->event_name();
+				}
+			}
+		}
+
+		if ( $event_titles ) {
+			$description = count( $event_titles ) > 1 ? sprintf( __( 'Registration for the events: %s', 'event_espresso' ), implode( ', ', $event_titles ) ) : sprintf( 'Registration for the event: %s ', 'event_espresso', $event_titles[0] );
+		} else {
+			$description = '';
+		}
+
+		//set status depending on Transaction status
+		$aff_status = $transaction->is_completed() ? 'unpaid' : 'pending';
+
+		//store visit in db
+		$referral_id = $awp->referrals->add( array(
+			'affiliate_id' => $awp->tracking->get_affiliate_id(),
+			'amount' => $invoice_amount,
+			'status' => $aff_status,
+			'description' => $description,
+			'context' => self::$_context,
+			'campaign' => $awp->tracking->get_campaign(),
+			'reference' => $transaction->ID(),
+			'visit_id' => $awp->tracking->get_visit_id()
+		));
+
+		$awp->visits->update( $awp->tracking->get_visit_id(), array( 'referral_id' => $referral_id ), '', 'visit' );
+	}
+
 }
