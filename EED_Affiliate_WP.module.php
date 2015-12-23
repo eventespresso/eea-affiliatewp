@@ -174,7 +174,7 @@ class EED_Affiliate_WP extends EED_Module {
 		}
 
 		if ( $event_titles ) {
-			$description = count( $event_titles ) > 1 ? sprintf( __( 'Registration for the events: %s', 'event_espresso' ), implode( ', ', $event_titles ) ) : sprintf( 'Registration for the event: %s ', 'event_espresso', $event_titles[0] );
+			$description = count( $event_titles ) > 1 ? sprintf( __( 'Registration for the events: %s', 'event_espresso' ), implode( ', ', $event_titles ) ) : sprintf( __( 'Registration for the event: %s ', 'event_espresso' ), $event_titles[0] );
 		} else {
 			$description = '';
 		}
@@ -190,7 +190,6 @@ class EED_Affiliate_WP extends EED_Module {
 			'reference' => $transaction->ID(),
 			'visit_id' => $awp->tracking->get_visit_id()
 		));
-
 
 		//reset status if transaction is completed because AffiliateWP seems to have this as the canonical method for changing
 		//referral status (with actions etc on this method).
