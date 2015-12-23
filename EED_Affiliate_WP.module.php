@@ -82,7 +82,38 @@ class EED_Affiliate_WP extends EED_Module {
 		}
 
 	}
-	
+
+
+
+
+	/**
+	 * Callback for the AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion action hook.
+	 * Used to ensure that if there are any affiliate records matching the deleted transaction id that we delete those
+	 * referrals.
+	 *
+	 * @param $deleted_transaction_ids
+	 */
+	public function set_affiliate_status_after_deleted_transaction( $deleted_transaction_ids ) {
+		if ( is_array( $deleted_transaction_ids ) ) {
+			$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
+			if (
+				$awp instanceof Affiliate_WP
+			) {
+				foreach ( $deleted_transaction_ids as $txn_id ) {
+					if ( $referral = $awp->referrals->get_by( 'reference', $txn_id, self::$_context ) ) {
+						if (
+							is_object( $referral )
+							&& function_exists( 'affwp_delete_referral' )
+							&& $referral->status !== 'paid'
+						) {
+							affwp_delete_referral( $referral );
+						}
+					}
+				}
+			}
+		}
+	}
+
 
 	/**
 	 * This will update a AffiliateWP referral record if it hasn't been paid according to the transaction status.
