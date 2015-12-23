@@ -37,13 +37,13 @@ class EED_Affiliate_WP extends EED_Module {
 
 	public static function set_hooks() {
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
-		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', arra( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
+		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
 	}
 
 	public static function set_hooks_admin() {
 		//covers ajax requests
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
-		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', arra( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
+		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
 	}
 
 
