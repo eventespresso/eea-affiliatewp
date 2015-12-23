@@ -37,11 +37,13 @@ class EED_Affiliate_WP extends EED_Module {
 
 	public static function set_hooks() {
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
+		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', arra( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
 	}
 
 	public static function set_hooks_admin() {
 		//covers ajax requests
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
+		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', arra( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
 	}
 
 
@@ -127,15 +129,16 @@ class EED_Affiliate_WP extends EED_Module {
 		if (
 			! is_object( $referral )
 			|| $referral->status === 'paid'
+			|| ! function_exists( 'affwp_set_referral_status' )
 		) {
 			return;
 		}
 
 		//if transaction is complete, then let's update the status to unpaid. Otherwise we make sure the status is pending.
 		if ( $transaction->is_completed() ) {
-			$awp->referrals->update( $referral->referral_id, array( 'status' => 'unpaid' ), '', 'referral' );
+			affwp_set_referral_status( $referral->referral_id, 'unpaid' );
 		} else {
-			$awp->referrals->update( $referral->referral_id, array( 'status' => 'pending' ), '', 'referral' );
+			affwp_set_referral_status( $referral->referral_id, 'pending' );
 		}
 	}
 
@@ -176,20 +179,27 @@ class EED_Affiliate_WP extends EED_Module {
 			$description = '';
 		}
 
-		//set status depending on Transaction status
-		$aff_status = $transaction->is_completed() ? 'unpaid' : 'pending';
-
 		//store visit in db
 		$referral_id = $awp->referrals->add( array(
 			'affiliate_id' => $awp->tracking->get_affiliate_id(),
 			'amount' => $invoice_amount,
-			'status' => $aff_status,
+			'status' => 'pending',
 			'description' => $description,
 			'context' => self::$_context,
 			'campaign' => $awp->tracking->get_campaign(),
 			'reference' => $transaction->ID(),
 			'visit_id' => $awp->tracking->get_visit_id()
 		));
+
+
+		//reset status if transaction is completed because AffiliateWP seems to have this as the canonical method for changing
+		//referral status (with actions etc on this method).
+		if (
+			$transaction->is_completed()
+			&& function_exists( 'affwp_set_referral_status' )
+		) {
+			affwp_set_referral_status( $referral_id, 'unpaid' );
+		}
 
 		$awp->visits->update( $awp->tracking->get_visit_id(), array( 'referral_id' => $referral_id ), '', 'visit' );
 	}
