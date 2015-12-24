@@ -36,14 +36,16 @@ class EED_Affiliate_WP extends EED_Module {
 	}
 
 	public static function set_hooks() {
-		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
-		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
+		add_action( 'AHEE__EE_Payment_Processor__update_txn_based_on_payment', array( 'EED_Affiliate_WP', 'create_referral_record' ), 10, 2 );
+		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10, 2 );
+		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_referral_status_after_deleted_transaction' ) );
 	}
 
 	public static function set_hooks_admin() {
 		//covers ajax requests
-		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'track_conversion' ), 10, 2 );
-		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_status_after_deleted_transaction' ) );
+		add_action( 'AHEE__EE_Payment_Processor__update_txn_based_on_payment', array( 'EED_Affiliate_WP', 'create_referral_record' ), 10, 2 );
+		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10, 2 );
+		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_referral_status_after_deleted_transaction' ) );
 	}
 
 
@@ -55,12 +57,12 @@ class EED_Affiliate_WP extends EED_Module {
 
 
 	/**
-	 * Callback for AHEE__thank_you_page_transaction_details_template__after_transaction_table_row that we'll use to track
-	 * any conversions for Affiliates.
+	 * Callback for AHEE__thank_you_page_transaction_details_template__after_transaction_table_row that we'll use to update
+	 * any referrals for Affiliates that have already been created.
 	 *
 	 * @param EE_Transaction|null $transaction
 	 */
-	public static function track_conversion( $transaction, $update_params ) {
+	public static function update_referral_record( $transaction, $update_params ) {
 		do_action( 'AHEE_log', __FILE__, __FUNCTION__, $transaction->is_completed(), 'transaction is completed for affiliate wp callback' );
 
 		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
@@ -73,16 +75,29 @@ class EED_Affiliate_WP extends EED_Module {
 			return;
 		}
 
-		//next see if this transaction is already being tracked and if it is, then we update the affiliate record if necessary.
-		if (
-			$referral = $awp->referrals->get_by( 'reference', $transaction->ID(), self::$_context )
-		) {
-			self::_maybe_update_affiliate_status( $transaction, $awp, $referral );
-		} else {
-			//so there is no affiliate record for this transaction so we'll create one if possible.
-			self::_maybe_initiate_affiliate_tracking( $transaction, $awp );
+		//IF we have a referral, update.  Otherwise we do nothing.
+		if ( $referral = $awp->referrals->get_by( 'reference', $transaction->ID(), self::$_context ) ) {
+			self::_maybe_update_affiliate_referral_status( $transaction, $awp, $referral );
 		}
 
+	}
+
+
+	/**
+	 * Callback for AHEE__EE_Payment_Processor__update_txn_based_on_payment that is used to create the initial referral record
+	 * if possible.
+	 *
+	 * @param EE_Transaction $transaction
+	 * @param EE_Payment     $payment
+	 */
+	public static function create_referral_record( EE_Transaction $transaction, EE_Payment $payment ) {
+		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
+		if (
+			$awp instanceof Affiliate_WP
+			&& ! $awp->referrals->get_by( 'reference', $transaction->ID(), self::$_context ) //don't create if its already present.
+		) {
+			self::_maybe_initiate_affiliate_tracking( $transaction, $awp );
+		}
 	}
 
 
@@ -95,7 +110,7 @@ class EED_Affiliate_WP extends EED_Module {
 	 *
 	 * @param $deleted_transaction_ids
 	 */
-	public function set_affiliate_status_after_deleted_transaction( $deleted_transaction_ids ) {
+	public function set_affiliate_referral_status_after_deleted_transaction( $deleted_transaction_ids ) {
 		if ( is_array( $deleted_transaction_ids ) ) {
 			$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
 			if (
@@ -124,7 +139,7 @@ class EED_Affiliate_WP extends EED_Module {
 	 * @param Affiliate_WP   $awp
 	 * @param                $referral
 	 */
-	protected static function _maybe_update_affiliate_status( EE_Transaction $transaction, Affiliate_WP $awp, $referral ) {
+	protected static function _maybe_update_affiliate_referral_status( EE_Transaction $transaction, Affiliate_WP $awp, $referral ) {
 		//if $referral isn't an object or has already been paid, then get out
 		if (
 			! is_object( $referral )
@@ -134,9 +149,16 @@ class EED_Affiliate_WP extends EED_Module {
 			return;
 		}
 
-		//if transaction is complete, then let's update the status to unpaid. Otherwise we make sure the status is pending.
+		//if transaction is complete, then let's update the status to unpaid and also ensure the total is correct for
+		// the current transaction. Otherwise we make sure the status is pending.
 		if ( $transaction->is_completed() ) {
+			//valid affiliate so let's get creating the initial affiliate record.
+			$invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount( $transaction->total(), $referral->affiliate_id ) : 0;
 			affwp_set_referral_status( $referral->referral_id, 'unpaid' );
+
+			if ( $invoice_amount !== $referral->amount ) {
+				$awp->referrals->update( $referral->referral_id, array( 'amount' => $invoice_amount ) );
+			}
 		} else {
 			affwp_set_referral_status( $referral->referral_id, 'pending' );
 		}
