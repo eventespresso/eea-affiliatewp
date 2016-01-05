@@ -39,6 +39,7 @@ class EED_Affiliate_WP extends EED_Module {
 		add_action( 'AHEE__EE_Payment_Processor__update_txn_based_on_payment', array( 'EED_Affiliate_WP', 'create_referral_record' ), 10, 2 );
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10, 2 );
 		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_referral_status_after_deleted_transaction' ) );
+		add_action( 'AHEE__EE_SPCO_Reg_Step_Finalize_Registration__process_reg_step__completed', array( 'EED_Affiliate_WP', 'maybe_create_referral_record_from_finalize_registration_step' ), 10, 2 );
 	}
 
 	public static function set_hooks_admin() {
@@ -46,6 +47,7 @@ class EED_Affiliate_WP extends EED_Module {
 		add_action( 'AHEE__EE_Payment_Processor__update_txn_based_on_payment', array( 'EED_Affiliate_WP', 'create_referral_record' ), 10, 2 );
 		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10, 2 );
 		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_referral_status_after_deleted_transaction' ) );
+		add_action( 'AHEE__EE_SPCO_Reg_Step_Finalize_Registration__process_reg_step__completed', array( 'EED_Affiliate_WP', 'maybe_create_referral_record_from_finalize_registration_step' ), 10, 2 );
 	}
 
 
@@ -84,13 +86,27 @@ class EED_Affiliate_WP extends EED_Module {
 
 
 	/**
+	 * Callback for AHEE__EE_SPCO_Reg_Step_Finalize_Registration__process_reg_step__completed that is used for creating
+	 * a referral record in the case where a payment isn't being made (example when an Event has the Default Registration
+	 * status set to Not Approved)
+	 *
+	 * @param EE_Checkout $checkout
+	 * @param array       $transaction_update_parameters
+	 */
+	public static function maybe_create_referral_record_from_finalize_registration_step( EE_Checkout $checkout, $transaction_update_parameters ) {
+		//this just wraps our existing create referral method.
+		self::create_referral_record( $checkout->transaction, $checkout->payment );
+	}
+
+
+	/**
 	 * Callback for AHEE__EE_Payment_Processor__update_txn_based_on_payment that is used to create the initial referral record
 	 * if possible.
 	 *
 	 * @param EE_Transaction $transaction
-	 * @param EE_Payment     $payment
+	 * @param EE_Payment|null     $payment
 	 */
-	public static function create_referral_record( EE_Transaction $transaction, EE_Payment $payment ) {
+	public static function create_referral_record( EE_Transaction $transaction, $payment ) {
 		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
 		if (
 			$awp instanceof Affiliate_WP
