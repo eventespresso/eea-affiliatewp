@@ -219,16 +219,18 @@ class EED_Affiliate_WP extends EED_Module {
 		}
 
 		//store visit in db
-		$referral_id = $awp->referrals->add( array(
-			'affiliate_id' => $awp->tracking->get_affiliate_id(),
-			'amount' => $invoice_amount,
-			'status' => 'pending',
-			'description' => $description,
-			'context' => self::$_context,
-			'campaign' => $awp->tracking->get_campaign(),
-			'reference' => $transaction->ID(),
-			'visit_id' => $awp->tracking->get_visit_id()
-		));
+		$referral_id = $awp->referrals->add(
+			array(
+				'affiliate_id' => $awp->tracking->get_affiliate_id(),
+				'amount' => $invoice_amount,
+				'status' => 'pending',
+				'description' => $description,
+				'context' => self::$_context,
+				'campaign' => $awp->tracking->get_campaign(),
+				'reference' => $transaction->ID(),
+				'visit_id' => $awp->tracking->get_visit_id()
+			)
+		);
 
 		//reset status if transaction is completed because AffiliateWP seems to have this as the canonical method for changing
 		//referral status (with actions etc on this method).
