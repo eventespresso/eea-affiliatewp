@@ -37,7 +37,7 @@ class EED_Affiliate_WP extends EED_Module {
 
 	public static function set_hooks() {
 		add_action( 'AHEE__EE_Payment_Processor__update_txn_based_on_payment', array( 'EED_Affiliate_WP', 'create_referral_record' ), 10, 2 );
-		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10, 2 );
+		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10 );
 		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_referral_status_after_deleted_transaction' ) );
 		add_action( 'AHEE__EE_SPCO_Reg_Step_Finalize_Registration__process_reg_step__completed', array( 'EED_Affiliate_WP', 'maybe_create_referral_record_from_finalize_registration_step' ), 10, 2 );
 	}
@@ -45,9 +45,10 @@ class EED_Affiliate_WP extends EED_Module {
 	public static function set_hooks_admin() {
 		//covers ajax requests
 		add_action( 'AHEE__EE_Payment_Processor__update_txn_based_on_payment', array( 'EED_Affiliate_WP', 'create_referral_record' ), 10, 2 );
-		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10, 2 );
+		add_action( 'AHEE__EE_Transaction_Processor__update_transaction_and_registrations_after_checkout_or_payment', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10 );
 		add_action( 'AHEE__EEM_Transaction__delete_junk_transactions__successful_deletion', array( 'EED_Affiliate_WP', 'set_affiliate_referral_status_after_deleted_transaction' ) );
 		add_action( 'AHEE__EE_SPCO_Reg_Step_Finalize_Registration__process_reg_step__completed', array( 'EED_Affiliate_WP', 'maybe_create_referral_record_from_finalize_registration_step' ), 10, 2 );
+		add_action( 'AHEE__Transactions_Admin_Page__apply_payments_or_refund__after_recording', array( 'EED_Affiliate_WP', 'update_referral_record' ), 10 );
 	}
 
 
@@ -64,8 +65,8 @@ class EED_Affiliate_WP extends EED_Module {
 	 *
 	 * @param EE_Transaction|null $transaction
 	 */
-	public static function update_referral_record( $transaction, $update_params ) {
-		do_action( 'AHEE_log', __FILE__, __FUNCTION__, $transaction->is_completed(), 'transaction is completed for affiliate wp callback' );
+	public static function update_referral_record( $transaction ) {
+		do_action( 'AHEE_log', __FILE__, __FUNCTION__, $transaction->is_completed(), 'transaction is completed check for affiliate wp callback' );
 
 		$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
 
