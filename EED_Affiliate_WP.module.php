@@ -213,7 +213,7 @@ class EED_Affiliate_WP extends EED_Module {
 		}
 
 		if ( $event_titles ) {
-			$description = count( $event_titles ) > 1 ? sprintf( __( 'Registration for the events: %s', 'event_espresso' ), implode( ', ', $event_titles ) ) : sprintf( __( 'Registration for the event: %s ', 'event_espresso' ), $event_titles[0] );
+			$description = count( $event_titles ) > 1 ? implode( ', ', $event_titles ) : $event_titles[0];
 		} else {
 			$description = '';
 		}
@@ -224,7 +224,7 @@ class EED_Affiliate_WP extends EED_Module {
 				'affiliate_id' => $awp->tracking->get_affiliate_id(),
 				'amount' => $invoice_amount,
 				'status' => 'pending',
-				'description' => $description,
+				'description' => apply_filters( 'AHEE__EED_Affiliate_WP___maybe_initiate_affiliate_tracking__description', $description, $transaction, $event_titles ),
 				'context' => self::$_context,
 				'campaign' => $awp->tracking->get_campaign(),
 				'reference' => $transaction->ID(),
