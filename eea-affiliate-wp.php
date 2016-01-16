@@ -1,6 +1,6 @@
 <?php
 /*
-  Plugin Name: Event Espresso - AffiliateWP integration (EE4.x+)
+  Plugin Name: Event Espresso - AffiliateWP integration (EE4.8.30+)
   Plugin URI: http://www.eventespresso.com
   Description: This integrates Event Espresso so it tracks affiliate conversions used with the AffiliateWP system.
   Version: 1.0.0.rc.002
@@ -37,7 +37,7 @@
  * ------------------------------------------------------------------------
  */
 // define versions and this file
-define( 'EE_AFFILIATE_WP_CORE_VERSION_REQUIRED', '4.8.0.rc.0000' );
+define( 'EE_AFFILIATE_WP_CORE_VERSION_REQUIRED', '4.8.30.p' );
 define( 'EE_AFFILIATE_WP_VERSION', '1.0.0.rc.002' );
 define( 'EE_AFFILIATE_WP_PLUGIN_FILE',  __FILE__ );
 
