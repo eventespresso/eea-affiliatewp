@@ -24,7 +24,7 @@ Class  EE_Affiliate_Addon extends EE_Addon {
 			'EE_Affiliate_Addon',
 			array(
 				'version' 					=> EE_AFFILIATE_WP_VERSION,
-				'plugin_slug' 			=> 'eea-affiliate-wp',
+				'plugin_slug' 			=> 'eea-affiliatewp',
 				'min_core_version' => EE_AFFILIATE_WP_CORE_VERSION_REQUIRED,
 				'main_file_path' 		=> EE_AFFILIATE_WP_PLUGIN_FILE,
 				'autoloader_paths' => array(
@@ -33,7 +33,7 @@ Class  EE_Affiliate_Addon extends EE_Addon {
 				'module_paths' => array( EE_AFFILIATE_WP_PATH . 'EED_Affiliate_WP.module.php' ),
 				// if plugin update engine is being used for auto-updates. not needed if PUE is not being used.
 				'pue_options'			=> array(
-					'pue_plugin_slug' 		=> 'eea-affiliate-wp',
+					'pue_plugin_slug' 		=> 'eea-affiliatewp',
 					'plugin_basename' 	=> EE_AFFILIATE_WP_BASENAME,
 					'checkPeriod' 				=> '24',
 					'use_wp_update' 		=> false,

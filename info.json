@@ -1,6 +1,6 @@
 {
 	"versionFile" : "eea-affiliate-wp.php",
-	"slug" : "eea-affiliate-wp",
+	"slug" : "eea-affiliatewp",
 	"name" : "EE4 AffiliateWP",
 	"archiveBaseUrl" : "http://build.eventespresso.com/",
 	"archiveBasePath" : "~/www/build/",
