@@ -127,7 +127,7 @@ class EED_Affiliate_WP extends EED_Module {
 	 *
 	 * @param $deleted_transaction_ids
 	 */
-	public function set_affiliate_referral_status_after_deleted_transaction( $deleted_transaction_ids ) {
+	public static function set_affiliate_referral_status_after_deleted_transaction( $deleted_transaction_ids ) {
 		if ( is_array( $deleted_transaction_ids ) ) {
 			$awp = function_exists( 'affiliate_wp' ) ? affiliate_wp() : null;
 			if (
