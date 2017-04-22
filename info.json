@@ -8,9 +8,10 @@
 		"src/tests/**",
 		"src/info.json",
 		"src/circle.yml",
-		"src/readme.txt"
+		"src/readme.txt",
+        "src/.travis.yml"
 	],
-	"github" : false,
+	"github" : true,
 	"demoee" : false,
 	"awsbucket" : "",
 	"awsregion" : "",
