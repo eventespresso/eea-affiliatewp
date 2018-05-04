@@ -1,1 +1,24 @@
-{"versionFile":"eea-affiliate-wp.php","slug":"eea-affiliatewp","name":"EE4 AffiliateWP","archiveBaseUrl":"http:\/\/build.eventespresso.com\/","archiveBasePath":"~\/www\/build\/","releaseFilesRemove":["src\/tests\/**","src\/info.json","src\/circle.yml","src\/readme.txt","src\/.travis.yml"],"github":true,"demoee":false,"awsbucket":"","awsregion":"","srcBuildFolderName":"eea-affiliate-wp","textDomain":"event_espresso","wpOrgRelease":"1.0.1.p"}
+{
+	"versionFile": "eea-affiliate-wp.php",
+	"slug": "eea-affiliatewp",
+	"name": "EE4 AffiliateWP",
+	"jsBuildDirectory": ".\/",
+	"wpi18nJsPotFilePath": ".\/languages\/ee-js.pot",
+	"releaseFilesRemove": [
+		"src\/tests\/**",
+		"src\/acceptance_tests\/**",
+		"src\/info.json",
+		"src\/.travis.yml",
+		"src\/.github\/**",
+		"src\/assets\/src\/**",
+		"src\/eslint\/**",
+		"src\/.babelrc",
+		"src\/.editorconfig",
+		"src\/.eslintignore",
+		"src\/.eslintrc.js",
+		"src\/.nvmrc",
+		"src\/.postcss.config.js"
+	],
+	"srcBuildFolderName": "eea-affiliate-wp",
+	"textDomain": "event_espresso"
+}

@@ -37,68 +37,83 @@
  * ------------------------------------------------------------------------
  */
 // define versions and this file
-define( 'EE_AFFILIATE_WP_CORE_VERSION_REQUIRED', '4.8.30.p' );
-define( 'EE_AFFILIATE_WP_VERSION', '1.0.2.rc.002' );
-define( 'EE_AFFILIATE_WP_PLUGIN_FILE',  __FILE__ );
+define('EE_AFFILIATE_WP_CORE_VERSION_REQUIRED', '4.8.30.p');
+define('EE_AFFILIATE_WP_VERSION', '1.0.2.rc.002');
+define('EE_AFFILIATE_WP_PLUGIN_FILE', __FILE__);
 
 
 /**
  *    captures plugin activation errors for debugging
  */
-function espresso_affiliate_wp_plugin_activation_errors() {
+function espresso_affiliate_wp_plugin_activation_errors()
+{
 
-	if ( WP_DEBUG ) {
-		$activation_errors = ob_get_contents();
-		file_put_contents( EVENT_ESPRESSO_UPLOAD_DIR . 'logs' . DS . 'espresso_affiliate_wp_plugin_activation_errors.html', $activation_errors );
-	}
+    if (WP_DEBUG) {
+        $activation_errors = ob_get_contents();
+        file_put_contents(
+            EVENT_ESPRESSO_UPLOAD_DIR . 'logs' . DS . 'espresso_affiliate_wp_plugin_activation_errors.html',
+            $activation_errors
+        );
+    }
 }
-add_action( 'activated_plugin', 'espresso_affiliate_wp_plugin_activation_errors' );
 
+add_action('activated_plugin', 'espresso_affiliate_wp_plugin_activation_errors');
 
 
 /**
  *    registers addon with EE core
  */
-function load_espresso_affiliate_wp() {
-  if ( class_exists( 'EE_Addon' )) {
-      // new_addon version
-      require_once ( plugin_dir_path( __FILE__ ) . 'EE_Affiliate_Addon.class.php' );
-      EE_Affiliate_Addon::register_addon();
-  } else {
-    add_action( 'admin_notices', 'espresso_affiliate_wp_activation_error' );
-  }
+function load_espresso_affiliate_wp()
+{
+    if (class_exists('EE_Addon')) {
+        // new_addon version
+        require_once(plugin_dir_path(__FILE__) . 'EE_Affiliate_Addon.class.php');
+        EE_Affiliate_Addon::register_addon();
+    } else {
+        add_action('admin_notices', 'espresso_affiliate_wp_activation_error');
+    }
 }
-add_action( 'AHEE__EE_System__load_espresso_addons', 'load_espresso_affiliate_wp' );
 
+add_action('AHEE__EE_System__load_espresso_addons', 'load_espresso_affiliate_wp');
 
 
 /**
  *    verifies that addon was activated
  */
-function espresso_affiliate_wp_activation_check() {
-  if ( ! did_action( 'AHEE__EE_System__load_espresso_addons' ) ) {
-    add_action( 'admin_notices', 'espresso_affiliate_wp_activation_error' );
-  }
+function espresso_affiliate_wp_activation_check()
+{
+    if (! did_action('AHEE__EE_System__load_espresso_addons')) {
+        add_action('admin_notices', 'espresso_affiliate_wp_activation_error');
+    }
 }
-add_action( 'init', 'espresso_affiliate_wp_activation_check', 1 );
 
+add_action('init', 'espresso_affiliate_wp_activation_check', 1);
 
 
 /**
  *    displays activation error admin notice
  */
-function espresso_affiliate_wp_activation_error() {
-  if ( isset( $_GET['activate'] ) ) {
-    unset( $_GET['activate'] );
-    unset( $_REQUEST['activate'] );
-  }
-  if ( ! function_exists( 'deactivate_plugins' ) ) {
-    require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-  }
-  deactivate_plugins( plugin_basename( EE_AFFILIATE_WP_PLUGIN_FILE ) );
-  ?>
-  <div class="error">
-    <p><?php printf( __( 'Event Espresso AffiliateWP addon could not be activated. Please ensure that Event Espresso version %1$s or higher is running', 'event_espresso' ), EE_AFFILIATE_WP_CORE_VERSION_REQUIRED ); ?></p>
-  </div>
-<?php
+function espresso_affiliate_wp_activation_error()
+{
+    if (isset($_GET['activate'])) {
+        unset($_GET['activate']);
+        unset($_REQUEST['activate']);
+    }
+    if (! function_exists('deactivate_plugins')) {
+        require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+    }
+    deactivate_plugins(plugin_basename(EE_AFFILIATE_WP_PLUGIN_FILE));
+    ?>
+    <div class="error">
+        <p><?php
+            printf(
+                __(
+                    'Event Espresso AffiliateWP addon could not be activated. Please ensure that Event Espresso version %1$s or higher is running',
+                    'event_espresso'
+                ),
+                EE_AFFILIATE_WP_CORE_VERSION_REQUIRED
+            );
+            ?></p>
+    </div>
+    <?php
 }
