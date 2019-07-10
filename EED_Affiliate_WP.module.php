@@ -197,7 +197,7 @@ class EED_Affiliate_WP extends EED_Module
         }
 
         // valid affiliate so let's get creating the initial affiliate record.
-        $invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount($transaction->total()) : 0;
+        $invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount($transaction->total(), $awp->tracking->get_affiliate_id()) : 0;
 
         // get events on transaction so we can setup the description for this purchase.
         $registrations = $transaction->registrations();
