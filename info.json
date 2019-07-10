@@ -2,7 +2,6 @@
 	"versionFile": "eea-affiliate-wp.php",
 	"slug": "eea-affiliatewp",
 	"name": "EE4 AffiliateWP",
-	"jsBuildDirectory": ".\/",
 	"wpi18nJsPotFilePath": ".\/languages\/ee-js.pot",
 	"releaseFilesRemove": [
 		"src\/tests\/**",
