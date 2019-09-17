@@ -240,4 +240,30 @@ class EED_Affiliate_WP extends EED_Module
 
         $awp->visits->update($awp->tracking->get_visit_id(), array( 'referral_id' => $referral_id ), '', 'visit');
     }
+
+
+
+    /**
+     * Gets the base amount to calculate the referral amount from. Usually the Transaction Total.
+     *
+     * @param EE_Transaction $transaction
+     * @param Affiliate_WP   $awp
+     * @return float
+     */
+    public static function getInvoiceAmount(
+        EE_Transaction $transaction,
+        Affiliate_WP $awp
+    ) {
+        if ($awp->settings->get('exclude_tax')) {
+            $amount = $transaction->total() - $transaction->tax_total();
+        } else {
+            $amount = $transaction->total();
+        }
+        return apply_filters(
+            'FHEE__EED_Affiliate_WP__getInvoiceAmount__amount',
+            $amount,
+            $transaction,
+            $awp
+        );
+    }
 }
