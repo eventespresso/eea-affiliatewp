@@ -167,11 +167,12 @@ class EED_Affiliate_WP extends EED_Module
         // the current transaction. Otherwise we make sure the status is pending.
         if ($transaction->is_completed()) {
             // valid affiliate so let's get creating the initial affiliate record.
-            $invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount($transaction->total(), $referral->affiliate_id) : 0;
+            $invoice_amount = self::getInvoiceAmount($transaction, $awp);
+            $referral_amount = $invoice_amount > 0 ? affwp_calc_referral_amount($invoice_amount, $referral->affiliate_id) : 0;
             affwp_set_referral_status($referral->referral_id, 'unpaid');
 
-            if ($invoice_amount !== $referral->amount) {
-                $awp->referrals->update($referral->referral_id, array( 'amount' => $invoice_amount ));
+            if ($referral_amount !== $referral->amount) {
+                $awp->referrals->update($referral->referral_id, array( 'amount' => $referral_amount ));
             }
         } else {
             affwp_set_referral_status($referral->referral_id, 'pending');
@@ -197,7 +198,8 @@ class EED_Affiliate_WP extends EED_Module
         }
 
         // valid affiliate so let's get creating the initial affiliate record.
-        $invoice_amount = $transaction->total() > 0 ? affwp_calc_referral_amount($transaction->total(), $awp->tracking->get_affiliate_id()) : 0;
+        $invoice_amount = self::getInvoiceAmount($transaction, $awp);
+        $referral_amount = $invoice_amount > 0 ? affwp_calc_referral_amount($invoice_amount, $awp->tracking->get_affiliate_id()) : 0;
 
         // get events on transaction so we can setup the description for this purchase.
         $registrations = $transaction->registrations();
@@ -220,7 +222,7 @@ class EED_Affiliate_WP extends EED_Module
         $referral_id = $awp->referrals->add(
             array(
                 'affiliate_id' => $awp->tracking->get_affiliate_id(),
-                'amount' => $invoice_amount,
+                'amount' => $referral_amount,
                 'status' => 'pending',
                 'description' => apply_filters('AHEE__EED_Affiliate_WP___maybe_initiate_affiliate_tracking__description', $description, $transaction, $event_titles),
                 'context' => self::$_context,
