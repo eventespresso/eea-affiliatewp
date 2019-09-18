@@ -257,7 +257,7 @@ class EED_Affiliate_WP extends EED_Module
         Affiliate_WP $awp
     ) {
         if ($awp->settings->get('exclude_tax')) {
-            $amount = $transaction->total() - $transaction->tax_total();
+            $amount = EEH_Line_Item::get_pre_tax_subtotal($transaction->total_line_item())->total();
         } else {
             $amount = $transaction->total();
         }
